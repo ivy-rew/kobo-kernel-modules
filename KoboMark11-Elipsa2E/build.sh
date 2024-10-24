@@ -23,12 +23,13 @@ linearo(){
 
 kernel="$DIR/kernel/linux/v4.9"
 compiler="$DIR/${gcc}/bin/arm-linux-gnueabihf-"
+alias builder="make ARCH=arm CROSS_COMPILE=$compiler"
 
 config(){
   if [ ! -f "$kernel/.config" ]; then
     cp $DIR/.config $kernel
     cd $kernel
-    make ARCH=arm CROSS_COMPILE=$compiler oldconfig
+    builder oldconfig
   fi
 }
 
@@ -47,6 +48,11 @@ silence(){
     drivers/misc/mediatek/emi/mt8512/../submodule_common
     drivers/misc/mediatek/hwtcon
     drivers/misc/mediatek/hwtcon/hal
+    drivers/misc/mediatek/leds
+    drivers/misc/mediatek/leds/mt8512
+    drivers/misc/mediatek/thermal
+    drivers/misc/mediatek/thermal/mt8512
+    drivers/misc/mediatek/pmic/fiti
   )
 
   for brokePat in ${broken[@]}; do
@@ -62,11 +68,20 @@ silence(){
 
 build(){
   cd $kernel
-  make ARCH=arm CROSS_COMPILE=$compiler
+  builder
 }
 
-fetch
-linearo
-config
-patch
+modules(){
+  sudo apt install libncurses-dev libncursesw-dev
+  builder menuconfig
+}
+
+prepare(){
+  fetch
+  linearo
+  config
+  patch
+}
+
+prepare
 build
